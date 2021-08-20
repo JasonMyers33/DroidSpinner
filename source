@@ -1,0 +1,258 @@
+/*
+  The codes used on an Arduino Nano to get the Smuggler's Room Droid Interface kit to light up and spin
+  Goals include the use of individualy addressable LEDs and a stepper motor to tell a story of a droid 
+  attempting to hack into an imperal system.
+  This codes is also written and provided toi the Smuggler's Room Facebook group to help get other in the 
+  community to get their kit to work. So notes are provided with that in mind. 
+*/
+
+// Define LED data
+#include "FastLED.h" //Using this libary
+#define NUM_LEDS 27 //Number of LEDs being used
+#define Data_Pin 5 //Nano pin being used 
+#define chipset WS2812B //Type of lights being used
+CRGB leds[NUM_LEDS];
+
+//Define motor pins
+const int dirPin = 2;
+const int stepPin = 3;
+const int stepsPerRevolution = 200; //Number of steps in a revolution for this motor
+
+void setup()
+{
+  FastLED.addLeds<chipset, Data_Pin, GRB>(leds, NUM_LEDS); //Define LED data - note these light are Green, Red, Blue (GRB) not RGB
+  //Declare pins as Outputs
+  pinMode(stepPin, OUTPUT);
+  pinMode(dirPin, OUTPUT);
+}
+
+void loop()
+{
+  delay (300); //A pause for a safe boot up of all the equipment
+  topVent(); //Top vent with 3 LEDs
+  frontVent(); //First 3 LEDS are tied to the front vent
+  delay(500); //Pause before continuing
+  tiles(); //2 LEDS are the front tile buttons
+  ventBottom(); // Large vents across the bottom - three on each side - six in total
+  interface(); //The last 6 LEDs around the wheels
+  delay(1000); //A dramitic PAUSE
+  tiles(); //Adding these a second time breaks the linearness
+  stepper(); //Call the mottor fuction
+  finish(); //An end light sequence
+}
+
+void frontVent ()
+/*
+  I am using a white light because the plastic cover is orange and white is the brightest.
+  4 lights are tied to this function. The lights turn on one by one, then all off, and then all on.
+*/
+{
+  for (int i = 0; i < 4; i++) //Turns on the lights one at a time
+  {
+    leds[i] = CRGB::White;
+    FastLED.show();
+    delay(300);
+  }
+  //Make the lights flash
+  frontVentOff();
+  frontVentOn();
+  frontVentOff();
+  frontVentOn();
+}
+
+void frontVentOff() // Turns the lights on the front vent (orange) off
+{
+for (int i = 0; i < 4; i++) //Turns off the lights all at once
+  {
+    leds[i] = CRGB::Black;
+  }
+  FastLED.show();
+  delay(300);
+}
+
+void frontVentOn ()
+{
+or (int i = 0; i < 4; i++) //Turns on the lights all at once
+  {
+    leds[i] = CRGB::White;
+  }
+  FastLED.show();
+  delay(200);
+}
+
+void tiles()
+/*
+  These are the static blue and white buttons on the face of the unit. Called tiles in build instructions.
+  The plastic is colored, so both lights are set to white. The code flashes the lights on and off.
+*/
+{
+  leds[4] = CRGB::White;
+  FastLED.show();
+  delay(500);
+  leds[5] = CRGB::White;
+  FastLED.show();
+  delay(300);
+  leds[4] = CRGB::Black;
+  FastLED.show();
+  delay(300);
+  leds[4] = CRGB::White;
+  FastLED.show();
+  delay(200);
+  leds[5] = CRGB::Black;
+  FastLED.show();
+  leds[4] = CRGB::Black;
+  FastLED.show();
+  delay(500);
+  leds[5] = CRGB::White;
+  FastLED.show();
+}
+void topVent()
+// Small vent on top with 3 lights, lights up at once.
+{
+  for (int i = 6; i < 17; i++) //Turn on all lights at once
+  {
+    leds[i] = CRGB::DarkViolet;
+  }
+  FastLED.show();
+  delay(500);
+}
+void ventBottom()
+// Two small vents on the bottom with 3 lights each. These light up and change colors sequentially.
+{
+  for (int i = 11; i < 17; i++) //Sequence lighting up first color
+  {
+    leds[i] = CRGB::Blue;
+    FastLED.show();
+    delay(300);
+  }
+  for (int i = 11; i < 17; i++) //Sequence lighting up second color
+  {
+    leds[i] = CRGB::Teal;
+    FastLED.show();
+    delay(300);
+  }
+  for (int i = 11; i < 17; i++) //Sequence lighting up third color, but faster
+  {
+    leds[i] = CRGB::DeepPink;
+    FastLED.show();
+    delay(150); //This is what makes the colro change faster
+  }
+  delay(500); //Pause
+}
+void interface() //These 6 LEDs around the wheels light up and change colors.
+{
+  for (int i = 17; i < 27; i++) //Turn the lights on at once
+  {
+    leds[i] = CRGB::Yellow;
+  }
+  FastLED.show();
+  delay(300);
+  for (int i = 17; i < 27; i++) //Change color one light at a time
+  {
+    leds[i] = CRGB::DarkOrange;
+    FastLED.show();
+    delay(300);
+  }
+  for (int i = 17; i < 27; i++) //Change color one light at a time
+  {
+    leds[i] = CRGB::DarkCyan;
+    FastLED.show();
+    delay(200);
+  }
+  for (int i = 17; i < 27; i++) //Change color one light at a time
+  {
+    leds[i] = CRGB::Turquoise;
+    FastLED.show();
+    delay(200);
+  }
+}
+void stepper()
+/*
+  This spins the motor. The final code includes lighting effects.
+  800 is the fastest spin I could get working and 3000 the slowest with the selected motor.
+*/
+{
+  digitalWrite(dirPin, HIGH); // Set motor direction clockwise
+  for (int x = 0; x < 300; x++) // The 300 is the number of steps, this is 1 and ½ rotations.
+  {
+    digitalWrite(stepPin, HIGH);
+    delayMicroseconds(3000); //Higher the number the slower the spin
+    digitalWrite(stepPin, LOW);
+    delayMicroseconds(3000);
+  }
+  delay(300); //Pause before spinging the other direction
+  digitalWrite(dirPin, LOW); // Set motor direction antirclockwise
+  for (int x = 0; x < 150; x++) // Spin motor backwards ¾ rotation
+  {
+    digitalWrite(stepPin, HIGH);
+    delayMicroseconds(3000);
+    digitalWrite(stepPin, LOW);
+    delayMicroseconds(3000);
+  }
+  delay(200);
+  digitalWrite(dirPin, HIGH); // Set motor direction clockwise
+  for (int x = 0; x < 300; x++) // Spin the motor
+  {
+    digitalWrite(stepPin, HIGH);
+    delayMicroseconds(2000);
+    digitalWrite(stepPin, LOW);
+    delayMicroseconds(2000);
+  }
+  //Change color like a warning it is going wrong
+  for (int i = 17; i < 27; i++) //Wheel lights all go red at once
+  {
+    leds[i] = CRGB::Red;
+  }
+  FastLED.show();
+  delay(2000); //A Pause to let the color sink in
+  digitalWrite(dirPin, LOW); //Set motor direction anticlockwise
+  for (int x = 0; x < 200; x++) //Spin backwards very slowly
+  {
+    digitalWrite(stepPin, HIGH);
+    delayMicroseconds(3000);
+    digitalWrite(stepPin, LOW);
+    delayMicroseconds(3000);
+  }
+  delay(300); //Pause for drama
+  for (int x = 0; x < 300; x++) //Spin slow the other direction
+  {
+    digitalWrite(stepPin, HIGH);
+    delayMicroseconds(3000);
+    digitalWrite(stepPin, LOW);
+    delayMicroseconds(3000);
+  }
+  delay(500); //Pause for drama
+  digitalWrite(dirPin, HIGH);
+  for (int x = 0; x < 150; x++) //Set motor direction clockwise
+  {
+    digitalWrite(stepPin, HIGH);
+    delayMicroseconds(1000);
+    digitalWrite(stepPin, LOW);
+    delayMicroseconds(1000);
+  }
+  delay(1000);
+}
+void finish() //End sequence that turns all the lights to one color and then off.
+{
+  for (int i = 27; i > 0; i--) //Quickly turn on all the lights going backwards
+  {
+    leds[i] = CRGB::DarkCyan;
+    FastLED.show();
+    delay(50);
+  }
+  digitalWrite(dirPin, LOW); //Set motor direction anti-clockwise
+  for (int x = 0; x < 200; x++) // Spin motor slow to a final spot
+  {
+    digitalWrite(stepPin, HIGH);
+    delayMicroseconds(3000);
+    digitalWrite(stepPin, LOW);
+    delayMicroseconds(3000);
+  }
+  delay(500); //Pause before turning them all off
+  for (int i = 0; i < NUM_LEDS; i++)//Turn off the lights
+  {
+    leds[i] = CRGB::Black;
+  }
+  FastLED.show();
+  delay(3000); //cooldown pause before stating everything again
+}
