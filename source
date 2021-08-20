@@ -18,6 +18,19 @@ const int dirPin = 2;
 const int stepPin = 3;
 const int stepsPerRevolution = 200; //Number of steps in a revolution for this motor
 
+long randomNumber; // Define using random number to select what lights to light up
+int seconds;
+
+CRGB rotateColor [] = {
+   CRGB::Blue,
+   CRGB::Teal,
+   CRGB::DeepPink,
+   CRGB::Yellow,
+   CRGB::DarkOrange,
+   CRGB::DarkCyan,
+   CRGB::Turquoise
+   };
+
 void setup()
 {
   FastLED.addLeds<chipset, Data_Pin, GRB>(leds, NUM_LEDS); //Define LED data - note these light are Green, Red, Blue (GRB) not RGB
@@ -28,6 +41,7 @@ void setup()
 
 void loop()
 {
+  randomSeed(analogRead(A0));  //Get a random seed from Analog 0
   delay (300); //A pause for a safe boot up of all the equipment
   topVent(); //Top vent with 3 LEDs
   frontVent(); //First 3 LEDS are tied to the front vent
@@ -54,13 +68,13 @@ void frontVent ()
     delay(300);
   }
   //Make the lights flash
-  frontVentOff();
-  frontVentOn();
-  frontVentOff();
-  frontVentOn();
+  for (int x = 0; x < 4; x++) //Flash the lights 4 times
+  {
+  frontVentFlash();
+  }
 }
 
-void frontVentOff() // Turns the lights on the front vent (orange) off
+void frontVentFlash() // Turns the lights on the front vent (orange) on and off
 {
 for (int i = 0; i < 4; i++) //Turns off the lights all at once
   {
@@ -68,11 +82,7 @@ for (int i = 0; i < 4; i++) //Turns off the lights all at once
   }
   FastLED.show();
   delay(300);
-}
-
-void frontVentOn ()
-{
-or (int i = 0; i < 4; i++) //Turns on the lights all at once
+for (int i = 0; i < 4; i++) //Turns on the lights all at once
   {
     leds[i] = CRGB::White;
   }
@@ -86,26 +96,26 @@ void tiles()
   The plastic is colored, so both lights are set to white. The code flashes the lights on and off.
 */
 {
-  leds[4] = CRGB::White;
-  FastLED.show();
-  delay(500);
-  leds[5] = CRGB::White;
-  FastLED.show();
-  delay(300);
-  leds[4] = CRGB::Black;
-  FastLED.show();
-  delay(300);
-  leds[4] = CRGB::White;
-  FastLED.show();
-  delay(200);
-  leds[5] = CRGB::Black;
-  FastLED.show();
-  leds[4] = CRGB::Black;
-  FastLED.show();
-  delay(500);
-  leds[5] = CRGB::White;
-  FastLED.show();
+ for (int x = 0; x < 6; x++) //Flash the lights 6 times
+ {
+   randomNumber = random(4,5);
+   flash(randomNumber);
+ }
+ leds[4] = CRGB::White; //Turn on and leave on light 4
+ FastLED.show();
+ delay(300);
 }
+
+void flash(int r) //Flashing the tile lights
+{
+  leds[r] = CRGB::White;
+  FastLED.show();
+  delay(300);
+  leds[r] = CRGB::Black;
+  FastLED.show();
+  delay(300);
+}
+
 void topVent()
 // Small vent on top with 3 lights, lights up at once.
 {
@@ -116,29 +126,21 @@ void topVent()
   FastLED.show();
   delay(500);
 }
+
 void ventBottom()
 // Two small vents on the bottom with 3 lights each. These light up and change colors sequentially.
 {
   for (int i = 11; i < 17; i++) //Sequence lighting up first color
   {
-    leds[i] = CRGB::Blue;
+  for (int r = 0; r < 3; r++)
+  {
+    leds[i] = rotateColor[r];
     FastLED.show();
     delay(300);
+    }
   }
-  for (int i = 11; i < 17; i++) //Sequence lighting up second color
-  {
-    leds[i] = CRGB::Teal;
-    FastLED.show();
-    delay(300);
-  }
-  for (int i = 11; i < 17; i++) //Sequence lighting up third color, but faster
-  {
-    leds[i] = CRGB::DeepPink;
-    FastLED.show();
-    delay(150); //This is what makes the colro change faster
-  }
-  delay(500); //Pause
 }
+
 void interface() //These 6 LEDs around the wheels light up and change colors.
 {
   for (int i = 17; i < 27; i++) //Turn the lights on at once
@@ -147,91 +149,79 @@ void interface() //These 6 LEDs around the wheels light up and change colors.
   }
   FastLED.show();
   delay(300);
-  for (int i = 17; i < 27; i++) //Change color one light at a time
+  for (int i = 17; i < 27; i++) //Turn the lights on at once
   {
-    leds[i] = CRGB::DarkOrange;
-    FastLED.show();
-    delay(300);
-  }
-  for (int i = 17; i < 27; i++) //Change color one light at a time
-  {
-    leds[i] = CRGB::DarkCyan;
-    FastLED.show();
-    delay(200);
-  }
-  for (int i = 17; i < 27; i++) //Change color one light at a time
-  {
-    leds[i] = CRGB::Turquoise;
-    FastLED.show();
-    delay(200);
-  }
+    for (int r = 5; r < 7; r++)
+    {
+      leds[i] = rotateColor[r];
+      FastLED.show();
+      delay(300);
+      }
+    }
 }
+
 void stepper()
 /*
   This spins the motor. The final code includes lighting effects.
   800 is the fastest spin I could get working and 3000 the slowest with the selected motor.
 */
 {
-  digitalWrite(dirPin, HIGH); // Set motor direction clockwise
-  for (int x = 0; x < 300; x++) // The 300 is the number of steps, this is 1 and ½ rotations.
-  {
-    digitalWrite(stepPin, HIGH);
-    delayMicroseconds(3000); //Higher the number the slower the spin
-    digitalWrite(stepPin, LOW);
-    delayMicroseconds(3000);
-  }
+  seconds = 1500;
+  stepperRight (seconds);
   delay(300); //Pause before spinging the other direction
-  digitalWrite(dirPin, LOW); // Set motor direction antirclockwise
-  for (int x = 0; x < 150; x++) // Spin motor backwards ¾ rotation
+  seconds = 1800;
+  stepperLeft (seconds);
+  delay(200); //Pause before spinging the other direction
+  seconds = 2000;
+  stepperRight (seconds);
+  red(); //Alert color change
+  delay(2000); //A Pause to let the color sink in
+  seconds = 2500;
+  stepperLeft (seconds);
+  delay(300); //Pause for drama
+  seconds = 3000;
+  stepperRight (seconds);
+  delay(500); //Pause for drama
+  seconds = 1000;
+  stepperLeft (seconds);
+ }
+
+void stepperRight (int s) //Clockwise
+{
+digitalWrite(dirPin, HIGH); // Set motor direction clockwise
+randomNumber = random(100, 600);
+for (int i = 0; i < randomNumber; i ++)
   {
     digitalWrite(stepPin, HIGH);
-    delayMicroseconds(3000);
+    delayMicroseconds(s); //Higher the number the slower the spin
     digitalWrite(stepPin, LOW);
-    delayMicroseconds(3000);
+    delayMicroseconds(s);
   }
-  delay(200);
-  digitalWrite(dirPin, HIGH); // Set motor direction clockwise
-  for (int x = 0; x < 300; x++) // Spin the motor
-  {
+}
+
+void stepperLeft (int s) //anti-clockwise
+{
+digitalWrite(dirPin, LOW); // Set motor direction antirclockwise
+randomNumber = random(100, 600);
+for (int i = 0; i < randomNumber; i ++)
+ {
     digitalWrite(stepPin, HIGH);
-    delayMicroseconds(2000);
+    delayMicroseconds(s);
     digitalWrite(stepPin, LOW);
-    delayMicroseconds(2000);
+    delayMicroseconds(s);
   }
-  //Change color like a warning it is going wrong
-  for (int i = 17; i < 27; i++) //Wheel lights all go red at once
+ }
+ 
+ void red()
+ {
+ //Change color like a warning it is going wrong
+ for (int i = 17; i < 27; i++) //Wheel lights all go red at once
   {
     leds[i] = CRGB::Red;
   }
-  FastLED.show();
-  delay(2000); //A Pause to let the color sink in
-  digitalWrite(dirPin, LOW); //Set motor direction anticlockwise
-  for (int x = 0; x < 200; x++) //Spin backwards very slowly
-  {
-    digitalWrite(stepPin, HIGH);
-    delayMicroseconds(3000);
-    digitalWrite(stepPin, LOW);
-    delayMicroseconds(3000);
-  }
-  delay(300); //Pause for drama
-  for (int x = 0; x < 300; x++) //Spin slow the other direction
-  {
-    digitalWrite(stepPin, HIGH);
-    delayMicroseconds(3000);
-    digitalWrite(stepPin, LOW);
-    delayMicroseconds(3000);
-  }
-  delay(500); //Pause for drama
-  digitalWrite(dirPin, HIGH);
-  for (int x = 0; x < 150; x++) //Set motor direction clockwise
-  {
-    digitalWrite(stepPin, HIGH);
-    delayMicroseconds(1000);
-    digitalWrite(stepPin, LOW);
-    delayMicroseconds(1000);
-  }
-  delay(1000);
-}
+    FastLED.show();
+ } 
+
 void finish() //End sequence that turns all the lights to one color and then off.
 {
   for (int i = 27; i > 0; i--) //Quickly turn on all the lights going backwards
@@ -240,14 +230,8 @@ void finish() //End sequence that turns all the lights to one color and then off
     FastLED.show();
     delay(50);
   }
-  digitalWrite(dirPin, LOW); //Set motor direction anti-clockwise
-  for (int x = 0; x < 200; x++) // Spin motor slow to a final spot
-  {
-    digitalWrite(stepPin, HIGH);
-    delayMicroseconds(3000);
-    digitalWrite(stepPin, LOW);
-    delayMicroseconds(3000);
-  }
+  seconds = 3000;
+  stepperRight (seconds);
   delay(500); //Pause before turning them all off
   for (int i = 0; i < NUM_LEDS; i++)//Turn off the lights
   {
